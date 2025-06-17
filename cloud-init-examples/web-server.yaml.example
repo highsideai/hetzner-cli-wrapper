@@ -1,0 +1,95 @@
+#cloud-config
+# Web server setup with Nginx and SSL
+
+# Update packages
+package_update: true
+package_upgrade: true
+
+# Install packages
+packages:
+  - nginx
+  - certbot
+  - python3-certbot-nginx
+  - ufw
+  - git
+  - curl
+  - htop
+  - vim
+
+# Create web user
+users:
+  - name: web
+    groups: sudo, www-data
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ... # Replace with your public key
+
+# Configure firewall
+runcmd:
+  - ufw default deny incoming
+  - ufw default allow outgoing
+  - ufw allow ssh
+  - ufw allow 'Nginx Full'
+  - ufw --force enable
+  - systemctl start nginx
+  - systemctl enable nginx
+
+# Create basic Nginx configuration
+write_files:
+  - path: /etc/nginx/sites-available/default
+    content: |
+      server {
+          listen 80 default_server;
+          listen [::]:80 default_server;
+          
+          root /var/www/html;
+          index index.html index.htm index.nginx-debian.html;
+          
+          server_name _;
+          
+          location / {
+              try_files $uri $uri/ =404;
+          }
+          
+          # Security headers
+          add_header X-Frame-Options "SAMEORIGIN" always;
+          add_header X-XSS-Protection "1; mode=block" always;
+          add_header X-Content-Type-Options "nosniff" always;
+          add_header Referrer-Policy "no-referrer-when-downgrade" always;
+          add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+      }
+  
+  - path: /var/www/html/index.html
+    content: |
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <title>Welcome to Your Server</title>
+          <style>
+              body { font-family: Arial, sans-serif; margin: 40px; }
+              .container { max-width: 600px; margin: 0 auto; text-align: center; }
+              h1 { color: #333; }
+              .status { background: #e8f5e8; padding: 20px; border-radius: 5px; margin: 20px 0; }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <h1>🚀 Server is Running!</h1>
+              <div class="status">
+                  <p>Your Hetzner Cloud server is successfully configured and running Nginx.</p>
+                  <p>Server deployed on: $(date)</p>
+              </div>
+              <p>You can now deploy your application here.</p>
+          </div>
+      </body>
+      </html>
+
+# SSH configuration
+ssh_pwauth: false
+disable_root: false
+
+# Set timezone
+timezone: UTC
+
+final_message: "Web server setup completed! Nginx is running and ready to serve content."

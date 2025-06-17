@@ -1,0 +1,6 @@
+# No external dependencies required
+# This tool uses only Python standard library modules:
+# - os, sys, subprocess, argparse, json, pathlib, time, typing
+#
+# External requirement:
+# - hcloud CLI tool (install via: brew install hcloud or download from GitHub)

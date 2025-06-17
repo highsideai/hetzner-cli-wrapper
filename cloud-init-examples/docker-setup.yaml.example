@@ -1,0 +1,67 @@
+#cloud-config
+# Docker server setup with Docker Compose
+
+# Update package database
+package_update: true
+package_upgrade: true
+
+# Install prerequisites
+packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+  - lsb-release
+  - git
+  - htop
+  - vim
+
+# Create deploy user
+users:
+  - name: deploy
+    groups: sudo, docker
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ... # Replace with your public key
+
+# Install Docker
+runcmd:
+  # Add Docker's official GPG key
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  # Add Docker repository
+  - echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+  # Update package database
+  - apt-get update
+  # Install Docker
+  - apt-get install -y docker-ce docker-ce-cli containerd.io
+  # Install Docker Compose
+  - curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  - chmod +x /usr/local/bin/docker-compose
+  # Start and enable Docker
+  - systemctl start docker
+  - systemctl enable docker
+  # Add deploy user to docker group
+  - usermod -aG docker deploy
+
+# Configure Docker daemon
+write_files:
+  - path: /etc/docker/daemon.json
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "10m",
+          "max-file": "3"
+        },
+        "storage-driver": "overlay2"
+      }
+
+# SSH configuration
+ssh_pwauth: false
+disable_root: false
+
+# Set timezone
+timezone: UTC
+
+final_message: "Docker server setup completed! Docker and Docker Compose are ready to use."
