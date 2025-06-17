@@ -408,4 +408,4 @@ This project is open source. Feel free to use, modify, and distribute according 
 
 ---
 
-**Happy cloud computing! 🚀**
+Code written by the fine folks at https://corrie.ai and https://highside.ai with the assistance of Windsurf AI and Claude 4 Sonnet.
